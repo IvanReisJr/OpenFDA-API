@@ -3,30 +3,10 @@ import requests
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import seaborn as sns
+import seaborn as sns # Opcional, para melhorar a estética dos gráficos, se quiser
 
 # --- Configurações Iniciais do Streamlit ---
 st.set_page_config(layout="wide", page_title="OpenFDA - Análise de Eventos Adversos")
-
-# --- Detectar o Tema Atual e Ajustar Matplotlib ---
-# Verifica o tema base do Streamlit. Por padrão, se não conseguir detectar, assume 'light'
-current_base_theme = st._config.get_option('theme.base')
-# Define as cores do texto e ticks para Matplotlib com base no tema detectado
-if current_base_theme == 'dark':
-    mpl_text_color = '#FAFAFA'  # Branco para tema escuro
-    mpl_tick_color = '#FAFAFA'
-else:
-    mpl_text_color = '#262730'  # Quase preto para tema claro
-    mpl_tick_color = '#262730'
-
-# Aplica as configurações globais do Matplotlib
-plt.rcParams['text.color'] = mpl_text_color
-plt.rcParams['axes.labelcolor'] = mpl_text_color
-plt.rcParams['xtick.color'] = mpl_tick_color
-plt.rcParams['ytick.color'] = mpl_tick_color
-plt.rcParams['axes.edgecolor'] = mpl_tick_color # Cor das bordas dos eixos
-plt.rcParams['axes.titlecolor'] = mpl_text_color # Cor dos títulos dos eixos/subtítulos de gráfico
-
 
 # --- Constantes ---
 # URL base da API OpenFDA para eventos adversos de medicamentos
@@ -58,10 +38,8 @@ Explore os dados através de diversos indicadores visuais.
 """)
 
 # --- Carregamento e Pré-processamento de Dados ---
-# Posicionando o slider de limite na sidebar
-with st.sidebar:
-    limit_input = st.slider("Número de Eventos para Carregar (Max 2500)", 100, 2500, 500)
-    data = load_data(limit=limit_input)
+limit_input = st.sidebar.slider("Número de Eventos para Carregar (Max 2500)", 100, 2500, 500)
+data = load_data(limit=limit_input)
 
 # Verifica se os dados foram carregados com sucesso
 if data:
@@ -69,7 +47,7 @@ if data:
 
     st.sidebar.success(f"Dados brutos carregados: {len(df)} eventos.")
 
-    # --- Pré-processamento de datas e SLIDER DE DATA GLOBAL na SIDEBAR ---
+    # --- NOVO: Pré-processamento de datas e SLIDER DE DATA GLOBAL na SIDEBAR ---
     # Processa a coluna de data globalmente, antes de qualquer filtragem.
     if 'receiptdate' in df.columns:
         df['receipt_date'] = pd.to_datetime(df['receiptdate'], errors='coerce')
@@ -128,7 +106,10 @@ if data:
             if 'patient' in filtered_df.columns:
                 gender_raw = filtered_df['patient'].apply(lambda x: x['patientsex'] if isinstance(x, dict) and 'patientsex' in x else None)
                 gender_mapped = gender_raw.map({
-                    '1': 'Masculino', '2': 'Feminino', 'M': 'Masculino', 'F': 'Feminino'
+                    '1': 'Masculino',
+                    '2': 'Feminino',
+                    'M': 'Masculino',
+                    'F': 'Feminino'
                 }).fillna('Não Informado')
 
                 gender_counts = gender_mapped.value_counts()
@@ -145,17 +126,15 @@ if data:
                         labels=gender_counts.index,
                         autopct='%1.1f%%',
                         startangle=90,
-                        # textprops já não precisa de color='white' aqui
-                        textprops={'fontsize': 10}
+                        textprops={'color': 'white', 'fontsize': 10}
                     )
 
                     for autotext in autotexts:
-                        # autotext.set_color('white') # Remover esta linha
+                        autotext.set_color('white')
                         autotext.set_fontsize(10)
 
                     ax_pie.axis('equal')
 
-                    # Remover as definições de cor de spines também, pois já está em rcParams
                     ax_pie.spines['top'].set_visible(False)
                     ax_pie.spines['right'].set_visible(False)
                     ax_pie.spines['bottom'].set_visible(False)
@@ -178,13 +157,11 @@ if data:
                 fig_bar, ax_bar = plt.subplots(figsize=(6, 4))
                 ax_bar.bar(country_counts.index, country_counts.values, color='#1f77b4')
 
-                # Remover as definições de color aqui
-                ax_bar.set_xlabel("País", fontsize=10)
-                ax_bar.set_ylabel("Contagem", fontsize=10)
+                ax_bar.set_xlabel("País", color='white', fontsize=10)
+                ax_bar.set_ylabel("Contagem", color='white', fontsize=10)
 
-                # Remover as definições de labelcolor aqui
-                ax_bar.tick_params(axis='x', rotation=45, labelsize=9)
-                ax_bar.tick_params(axis='y', labelsize=9)
+                ax_bar.tick_params(axis='x', labelcolor='white', rotation=45, labelsize=9)
+                ax_bar.tick_params(axis='y', labelcolor='white', labelsize=9)
 
                 for tick in ax_bar.get_xticklabels():
                     tick.set_horizontalalignment('right')
@@ -225,11 +202,10 @@ if data:
                     fig_prod, ax_prod = plt.subplots(figsize=(6, 4))
                     ax_prod.bar(top_products.index, top_products.values, color='#2ca02c')
 
-                    # Remover as definições de color aqui
-                    ax_prod.set_xlabel("Medicamento", fontsize=10)
-                    ax_prod.set_ylabel("Contagem", fontsize=10)
-                    ax_prod.tick_params(axis='x', rotation=45, labelsize=9)
-                    ax_prod.tick_params(axis='y', labelsize=9)
+                    ax_prod.set_xlabel("Medicamento", color='white', fontsize=10)
+                    ax_prod.set_ylabel("Contagem", color='white', fontsize=10)
+                    ax_prod.tick_params(axis='x', labelcolor='white', rotation=45, labelsize=9)
+                    ax_prod.tick_params(axis='y', labelcolor='white', labelsize=9)
                     for tick in ax_prod.get_xticklabels():
                         tick.set_horizontalalignment('right')
 
@@ -265,11 +241,10 @@ if data:
                     fig_react, ax_react = plt.subplots(figsize=(6, 4))
                     ax_react.bar(top_reactions.index, top_reactions.values, color='#d62728')
 
-                    # Remover as definições de color aqui
-                    ax_react.set_xlabel("Reação", fontsize=10)
-                    ax_react.set_ylabel("Contagem", fontsize=10)
-                    ax_react.tick_params(axis='x', rotation=45, labelsize=9)
-                    ax_react.tick_params(axis='y', labelsize=9)
+                    ax_react.set_xlabel("Reação", color='white', fontsize=10)
+                    ax_react.set_ylabel("Contagem", color='white', fontsize=10)
+                    ax_react.tick_params(axis='x', labelcolor='white', rotation=45, labelsize=9)
+                    ax_react.tick_params(axis='y', labelcolor='white', labelsize=9)
                     for tick in ax_react.get_xticklabels():
                         tick.set_horizontalalignment('right')
 
@@ -294,11 +269,11 @@ if data:
 
             if 'patient' in filtered_df.columns:
                 AGE_UNIT_MAP = {
-                    '800': 10, # Décadas
-                    '801': 1,  # Anos
-                    '802': 1/12, # Meses
-                    '803': 1/365, # Dias
-                    '804': 1/(365*24) # Horas (aprox)
+                    '800': 10,
+                    '801': 1,
+                    '802': 1/12,
+                    '803': 1/365,
+                    '804': 1/(365*24)
                 }
 
                 def get_normalized_age(patient_data):
@@ -312,6 +287,7 @@ if data:
                             pass
                     return None
 
+                # Aplica a função no filtered_df, não no df original
                 filtered_df['normalized_age'] = filtered_df['patient'].apply(get_normalized_age)
                 valid_ages = filtered_df['normalized_age'].dropna()
 
@@ -321,11 +297,10 @@ if data:
                     fig_hist, ax_hist = plt.subplots(figsize=(6, 3.5))
                     ax_hist.hist(valid_ages, bins=20, edgecolor='black', color='#9467bd')
 
-                    # Remover as definições de color aqui
-                    ax_hist.set_xlabel("Idade (Anos)", fontsize=10)
-                    ax_hist.set_ylabel("Número de Pacientes", fontsize=10)
-                    ax_hist.tick_params(axis='x', labelsize=9)
-                    ax_hist.tick_params(axis='y', labelsize=9)
+                    ax_hist.set_xlabel("Idade (Anos)", color='white', fontsize=10)
+                    ax_hist.set_ylabel("Número de Pacientes", color='white', fontsize=10)
+                    ax_hist.tick_params(axis='x', labelcolor='white', labelsize=9)
+                    ax_hist.tick_params(axis='y', labelcolor='white', labelsize=9)
 
                     ax_hist.set_facecolor('none')
                     fig_hist.patch.set_facecolor('none')
@@ -342,7 +317,11 @@ if data:
         with col6:
             st.subheader("Análise Temporal de Eventos Adversos")
 
+            # A filtragem de data já foi feita no início do script para o 'filtered_df'
+            # e a coluna 'receipt_date' já foi processada.
+
             if not filtered_df.empty and 'receipt_date' in filtered_df.columns and not filtered_df['receipt_date'].empty:
+                # Agrupa diretamente o filtered_df
                 events_over_time = filtered_df.groupby(pd.Grouper(key='receipt_date', freq='ME')).size().reset_index(name='count')
                 events_over_time.columns = ['Data', 'Contagem']
 
@@ -350,11 +329,10 @@ if data:
                     fig_line, ax_line = plt.subplots(figsize=(10, 5))
                     ax_line.plot(events_over_time['Data'], events_over_time['Contagem'], color='#ff7f0e', marker='o', markersize=4)
 
-                    # Remover as definições de color aqui
-                    ax_line.set_xlabel("Data", fontsize=10)
-                    ax_line.set_ylabel("Contagem de Eventos", fontsize=10)
-                    ax_line.tick_params(axis='x', rotation=45, labelsize=9)
-                    ax_line.tick_params(axis='y', labelsize=9)
+                    ax_line.set_xlabel("Data", color='white', fontsize=10)
+                    ax_line.set_ylabel("Contagem de Eventos", color='white', fontsize=10)
+                    ax_line.tick_params(axis='x', labelcolor='white', rotation=45, labelsize=9)
+                    ax_line.tick_params(axis='y', labelcolor='white', labelsize=9)
 
                     formatter = mdates.DateFormatter('%Y-%m')
                     ax_line.xaxis.set_major_formatter(formatter)
@@ -370,6 +348,7 @@ if data:
                     st.info("Nenhum evento encontrado no intervalo de datas selecionado para a análise temporal.")
             else:
                 st.info("Nenhum dado de data válido para análise temporal no período selecionado.")
+        # --- FIM DAS NOVAS COLUNAS PARA IDADE E TEMPORAL ---
 
 else: # Caso os dados da API não sejam carregados
     st.warning("Nenhum dado carregado da API. Verifique a conexão com a internet ou o limite de requisição da API.")
